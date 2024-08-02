@@ -108,18 +108,55 @@ list () {
 
 #### PLAY Function Start ####
 
-play () {
-    track_id="$(($1 - 1))"
-    total_tracks=$(registry_length)
+play_track_by_id () {
+    input="$1"
+    total_tracks=$( registry_length )
 
-    # Validate input
-    if [[ ! $track_id =~ ^[0-9]+$ ]] || (( track_id < 0 || track_id + 1 > total_tracks )); then
-        echo "Invalid track ID. Please enter a number between 1 and $total_tracks."
+    if ! [[ "$input" =~ ^[0-9]+$ ]]; then
+        echo "Error: Invalid track ID. Please provide a numeric id."
+        return 1
+    fi
+
+    if (( input < 1 || input > total_tracks )); then
+        echo "Error: Invalid track ID. Please enter a number between 1 and $total_tracks."
         exit 1
     fi
 
-    read_registry "$track_id" "0"
-    mpv --loop "$DIR/$(read_registry "$track_id" "1")"
+    read_registry $(( input - 1 )) 0
+    mpv --loop "$DIR/$(read_registry $(( input - 1 )) 1)"
+}
+
+play() {
+    input="$1"
+
+    # Input validation
+    if [[ "$input" =~ ^[0-9]+$ ]]; then
+        # Input is a number, proceed with playing track by id
+        play_track_by_id "$input"
+    else
+        # Input is not a number, proceed with search
+        search_result=$(search "$input")
+
+        if [[ -z "$search_result" ]]; then
+            echo "Error: No tracks found matching the keyword '$input'."
+            exit 1
+        fi
+
+        search_count=$(echo "$search_result" | grep -c '^')
+
+        if (( search_count == 1 )); then
+            # Only one match found, play it directly
+            match_id=$(echo "$search_result" | grep -o '^[0-9]\+')
+            play_track_by_id "$match_id"
+        else
+            # Multiple matches found, display the options
+            echo "Multiple tracks found matching the keyword '$input':"
+            echo "$search_result"
+            read -r -p "Enter track ID to play> " track_id
+
+            play_track_by_id "$track_id"
+        fi
+    fi
 }
 
 #### PLAY Function End ####
@@ -249,13 +286,17 @@ usage="Usage: music.sh [option] [argument]
 
 Options:
 
-list                Lists all downloaded tracks in {id}. {title} format
-play <id>           Plays the track corresponding to <id>
-add <keyword>       Downloads music track, explained below in detail
-delete <id>         Deletes the track corresponding to <id>
-search <keyword>    Lists all tracks matching the keyword in {id}. {title} format
-stream <keyword>    Streams music track, explained below in detail
-help                Shows this usage information
+list                  Lists all downloaded tracks in {id}. {title} format
+play <keyword>        Plays downloaded tracks, explained below in detail
+add <id>/<keyword>    Downloads music track, explained below in detail
+delete <id>           Deletes the track corresponding to <id>
+search <keyword>      Lists all tracks matching the keyword in {id}. {title} format
+stream <keyword>      Streams music track, explained below in detail
+help                  Shows this usage information
+
+ - music.sh play <keyword>:
+Plays the track corresponding to <id>. Otherwise searches for <keyword> in library. If only one match is found, plays directly else lists and gives option to play.
+A number qualifies as <id> while everything else qualifies as <keyword>.
 
  - music.sh add/stream <keyword>:
 Searches and lists the top five search results on YouTube for the given <keyword>, numbered 1 to 5. Enter the serial number of the track you wish to download/stream in the prompt that follows.

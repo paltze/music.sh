@@ -23,12 +23,15 @@ music.sh [option] [argument]
 Options:
 
 - `list`:  Lists all downloaded tracks in {id}. {title} format
-- `play <id>`:  Plays the track corresponding to <id>
+- `play <id>`:  Plays downloaded tracks, explained below in detail
 - `add <keyword>`:Downloads music track, explained below in detail
-- `delete <id>`: Deletes the track corresponding to <id>
+- `delete <id>`: Deletes the track corresponding to `<id>`
 - `search <keyword>`: Lists all tracks matching the keyword in {id}. {title} format
 - `stream <keyword>`: Streams music track, explained below in detail
 - `help`: Shows this usage information.
+
+`music.sh play <keyword>`:
+Plays the track corresponding to `<id>`. Otherwise searches for `<keyword>` in library. If only one match is found, plays directly else lists and gives option to play. A number qualifies as `<id>` while everything else qualifies as `<keyword>`.
 
 `music.sh add/stream <search term>`:
 Searches and lists the top five search results on YouTube for the given <keyword>, numbered 1 to 5. Enter the serial number of the track you wish to download/stream in the prompt that follows
